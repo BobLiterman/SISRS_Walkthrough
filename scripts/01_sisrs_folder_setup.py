@@ -20,10 +20,6 @@ os.mkdir(sisrs_dir+"/Reads/TrimReads")
 os.mkdir(sisrs_dir+"/Reads/SubsetReads")
 os.mkdir(sisrs_dir+"/SISRS_Run")
 os.mkdir(sisrs_dir+"/Reference_Genome")
-os.mkdir(sisrs_dir+"/Reference_Genome/Annotations")
-os.mkdir(sisrs_dir+"/Post_SISRS_Processing")
-os.mkdir(sisrs_dir+"/R_Analyses")
-os.mkdir(sisrs_dir+"/Reference_Topology")
 
 for x in taxa_list:
     os.mkdir(sisrs_dir+"/Reads/RawReads/"+x)
