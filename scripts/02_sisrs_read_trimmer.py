@@ -4,7 +4,7 @@
 # This script calls bbduk.sh, which must be installed and in your path
 # All reads for all taxa should be in .fastq.gz format (To change this, find/replace this script, replacing '.fastq.gz' with your chosen extension)
 # Paired-end read files must be identically basenamed and end in _1/_2
-# Input: (Optional) Number of available processors for FastQC (Default: 1, For 10 processors: python /home/Literman_PhyloSignal/scripts/raw_trim_script.py 10)
+# Input: (Optional) Number of available processors for FastQC (Default: 1, To run trimming and FastQC with 10 processors: python scripts/02_sisrs_read_trimmer.py 10)
 # Output: (1) Trimmed Reads (in <base_dir>/Reads/TrimReads/<Taxon>/<Read_Basename>_Trim.fastq.gz
 # Output: (2) Trim Log (in <base_dir>/Reads/RawReads/trimOutput)
 # Output: (3) FastQC output for all raw + trimmed read sets (in <base_dir>/Reads/RawReads/fastqcOutput & <base_dir>/Reads/TrimReads/fastqcOutput)
