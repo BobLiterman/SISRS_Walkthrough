@@ -23,7 +23,7 @@ sisrs_tax_dirs = [x for x in sisrs_tax_dirs if not x.endswith('Composite_Genome/
 missing_taxa = sys.argv[1]
 max_missing = len(sisrs_tax_dirs) - 2
 
-if missing_taxa >= max_missing:
+if int(missing_taxa) >= max_missing:
     sys.exit('Specified allowable missing taxa is at or above allowable values based on species counts (Must have 2+ species)')
 
 sisrs_filter_template = """#!/bin/sh
@@ -34,13 +34,13 @@ grep -oe "SISRS_[^/]*" SISRS_DIR/alignment_bi_locs_mMISSING_nogap.txt | uniq -c 
 grep -oe "SISRS_[^/]*" SISRS_DIR/alignment_pi_locs_mMISSING_nogap.txt | uniq -c | sort -k1 -nr | awk '{print $2}' > SISRS_DIR/alignment_pi_locs_mMISSING_nogap_Clean.txt"""
 
 keyList = ['SISRS_DIR','SCRIPT_DIR','MISSING']
-keyDict = {'SISRS_DIR':sisrs_dir,'SCRIPT_DIR':script_dir,'MISSING'=str(missing_taxa)}
+keyDict = {'SISRS_DIR':sisrs_dir,'SCRIPT_DIR':script_dir,'MISSING':str(missing_taxa)}
 
 for key in keyList:
     sisrs_filter_template = sisrs_filter_template.replace(key,keyDict[key])
-with open(sisrs_dir+"/Filter_Alignment_m"+str(missing)+".sh", "w") as text_file:
-    print(sisrs_output_template, file=text_file)
+with open(sisrs_dir+"/Filter_Alignment_m"+str(missing_taxa)+".sh", "w") as text_file:
+    print(sisrs_filter_template, file=text_file)
 
-with open(sisrs_dir+"/out_Filter_Alignment_m"+str(missing),"w") as file:
-    cmd = sisrs_dir+"/Filter_Alignment_m"+str(missing)+".sh"
+with open(sisrs_dir+"/out_Filter_Alignment_m"+str(missing_taxa),"w") as file:
+    cmd = sisrs_dir+"/Filter_Alignment_m"+str(missing_taxa)+".sh"
     subprocess.call(['sh',cmd],stdout=file, stderr=subprocess.PIPE)

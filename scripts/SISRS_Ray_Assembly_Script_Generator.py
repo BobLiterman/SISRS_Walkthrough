@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 # This script calls a Ray genome assembly on all reads in the SubsetReads directory
-# Ray requires working MPI via mpirun, even if running on one node
+# Ray requires working MPI via mpirun, even if running on  one node
 # This script also calls Bowtie2 and Samtools for genome indexing
 # Ensure Ray and Bowtie2 are compiled  with gzip support
 # Input: (1) Number of nodes for Ray. (2) Number of processors per node. 
-# Output: Ray assembly will be built in <basedir>/Ray_Composite_Genome (Contigs.fasta)
+# Output: Ray assembly script will be written to <scriptdir>/Ray_Composite_Assembly.sh
 
 import os
 from os import path
@@ -41,4 +41,5 @@ ray_command = [
     '-o',
     '{}'.format(ray_genome_dir)]
 
-os.system(" ".join(ray_command))
+with open(script_dir+"/Ray_Composite_Assembly.sh", "w+") as text_file:
+    print(" ".join(ray_command), file=text_file)

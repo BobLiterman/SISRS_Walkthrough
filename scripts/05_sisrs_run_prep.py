@@ -10,6 +10,7 @@ from os import path
 import sys
 from glob import glob
 import pandas as pd
+from Bio import SeqIO
 
 #Set cwd to script location
 script_dir = sys.path[0]
