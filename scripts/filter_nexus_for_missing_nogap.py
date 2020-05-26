@@ -43,7 +43,7 @@ def main(alignment_filename, missing_str):
     newdata = {sp: list() for sp in species}
     for i in range(len(data[species[0]])):
         site = [data[sp][i] for sp in species if data[sp][i] in bases]
-        if len(set(site)) > 1 and len(site) >= minsp:
+        if len(set(site)) > 1 and len(site) >= minsp and '-' not in site:
             for sp in species:
                 newdata[sp].append(data[sp][i])
             newlocs.append(locs[i])
