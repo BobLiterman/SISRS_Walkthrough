@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # This script runs the mapping steps of a SISRS run sequentially
-# These scripts can be run in parallel (e.g. on an HPC-type system)
+# WARNING: These scripts can be run in parallel (e.g. on an HPC-type system),  but this script runs them sequentially
 import os
 from os import path
 import sys
