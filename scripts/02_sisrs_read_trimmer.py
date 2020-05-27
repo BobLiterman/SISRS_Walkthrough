@@ -4,20 +4,20 @@
 # This script calls bbduk.sh, which must be installed and in your path
 # All reads for all taxa should be in .fastq.gz format (To change this, find/replace this script, replacing '.fastq.gz' with your chosen extension)
 # Paired-end read files must be identically basenamed and end in _1/_2
-
+#
 # Arguments: (1) -p/--processors (OPTIONAL): Number of available processors for FastQC/SLURM; Default: 1
 # Arguments: (2) --skipqc (OPTIONAL): Flag to skip FastQC step
 # Arguments: (3) --bash (OPTIONAL): Instead of executing trim scripts, save BASH script for trimming in 'scripts' directory
 # Arguments: (4) --slurm (OPTIONAL): Instead of executing trim scripts, save SLURM script for trimming in 'scripts' directory
-
+#
 # Output if trimming is exectuted (i.e. no --bash or --slurm argument):
 # Output: (1) Trimmed Reads (in <base_dir>/Reads/TrimReads/<Taxon>/<Read_Basename>_Trim.fastq.gz
 # Output: (2) Trim Log (in <base_dir>/Reads/RawReads/trimOutput)
 # Output: (3) FastQC output [unless disabled via --noqc] for all raw + trimmed read sets (in <base_dir>/Reads/RawReads/fastqcOutput & <base_dir>/Reads/TrimReads/fastqcOutput)
-
+#
 # Output if trim scripts are requested (e.g. through --bash or --slurm):
-# Output: (1A): If --bash is specified, trim script (SISRS_Trim_Scripts.sh) will be saved to 'scripts' directory as a BASH script
-# Output: (1B): If --slurm is specified, trim script with SLURM header (SISRS_Trim_Scripts_SLURM.sh) will be saved to 'scripts' directory as a SLURM script [Note: SLURM script has a default time of 48h; Change if necessary]
+# --bash: Trim script (SISRS_Trim_Script.sh) will be saved to 'scripts' directory as a BASH script
+# --slurm: Trim script with SLURM header (SISRS_Trim_Script.sh) will be saved to 'scripts' directory as a SLURM script [Note: SLURM script has a default time of 48h; Change if necessary]
 
 import os
 from os import path
@@ -230,3 +230,4 @@ if run_qc: # Run FastQC on all trimmed files, using all available processors
 
 if check_slurm or check_bash:
     f.close()
+
