@@ -2,10 +2,12 @@
 
 # TRIMMED READS SHOULD BE QC CHECKED PRIOR TO THIS STEP TO REMOVE DATASETS WITH LOW QUALITY OR HIGH DUPLICATION RATES
 # This script performs read subsetting for a SISRS composite genome assembly
-# This script calls reformat.sh  (part of BBMap Suite), which must be installed and in your path
+# This script calls reformat.sh (part of BBMap Suite), which must be installed and in your path
 # All reads for all taxa should be in .fastq.gz format (To change this, find/replace this script, replacing '.fastq.gz' with your chosen extension)
 # Paired-end read files must be identically basenamed and end in _Trim_1.fastq.gz/_Trim_2.fastq.gz
-# Input: (1) Genome size estimate in basepairs (e.g. Human: 3500000000)
+#
+# Arguments: (1) -g/--genomesize (REQUIRED): An estimate of the  group genome size (e.g. 3500000000 for a primate dataset)
+#
 # Output: For an analysis with X taxa and a genome size estimate of Y bp,  this script will subset each taxons reads down to (10*Y)/X bases (~10X total coverage when summed)
 
 import os
@@ -16,12 +18,17 @@ import subprocess
 from subprocess import check_call
 import pandas as pd
 import re
+import argparse
 
 #Set cwd to script location
 script_dir = sys.path[0]
 
 #Get Genome size estimate
-genomeSize = int(sys.argv[1])
+my_parser = argparse.ArgumentParser()
+my_parser.add_argument('-g','--genomesize',action='store',required=True)
+args = my_parser.parse_args()
+
+genomeSize = int(args.genomesize)
 
 #Set TrimRead directories based off of script folder location
 trim_read_dir = path.dirname(path.abspath(script_dir))+"/Reads/TrimReads"
@@ -189,7 +196,7 @@ if len(compiled_single_end) > 0:
             'samplebasestarget={}'.format(int(row.ToSample)),
             'ow=t',
             '&>',
-            '{outDir}out_{fileName}_Trim'.format(outDir=subset_log_dir,fileName=row.Dataset)]
+            '{outDir}out_{fileName}_Subset'.format(outDir=subset_log_dir,fileName=row.Dataset)]
         check_call(subset_command)
 
 if len(compiled_paired) > 0:
@@ -204,5 +211,6 @@ if len(compiled_paired) > 0:
             'samplebasestarget={}'.format(int(row.ToSample)),
             'ow=t',
             '&>',
-            '{outDir}out_{fileName}_Trim'.format(outDir=subset_log_dir,fileName=row.Dataset)]
+            '{outDir}out_{fileName}_Subset'.format(outDir=subset_log_dir,fileName=row.Dataset)]
         check_call(subset_command)
+
