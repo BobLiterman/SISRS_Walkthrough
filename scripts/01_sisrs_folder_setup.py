@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # This script preps the folder architecture for a SISRS run.
-# Arguments: (1) --tid: Path to text file with Taxon IDs on new lines [Default: One level above 'scripts' directory]
+# Arguments: (1) --tid (OPTIONAL): Path to text file with Taxon IDs on new lines [Default: One level above 'scripts' directory]
 # To fetch taxon IDs from 'Taxon_IDs' file in SISRS base directory: python scripts/folder_setup.py 
 # To fetch taxon IDs from another directory: python scripts/folder_setup.py --tid /some/other/path/to/Taxon_IDs
 # Output: Script will create lots of folders, including taxon folders in the RawReads, TrimReads, and SISRS_Run folders

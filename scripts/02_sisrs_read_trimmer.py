@@ -4,10 +4,20 @@
 # This script calls bbduk.sh, which must be installed and in your path
 # All reads for all taxa should be in .fastq.gz format (To change this, find/replace this script, replacing '.fastq.gz' with your chosen extension)
 # Paired-end read files must be identically basenamed and end in _1/_2
-# Input: (Optional) Number of available processors for FastQC (Default: 1, To run trimming and FastQC with 10 processors: python scripts/02_sisrs_read_trimmer.py 10)
+
+# Arguments: (1) -p/--processors (OPTIONAL): Number of available processors for FastQC/SLURM; Default: 1
+# Arguments: (2) --skipqc (OPTIONAL): Flag to skip FastQC step
+# Arguments: (3) --bash (OPTIONAL): Instead of executing trim scripts, save BASH script for trimming in 'scripts' directory
+# Arguments: (4) --slurm (OPTIONAL): Instead of executing trim scripts, save SLURM script for trimming in 'scripts' directory
+
+# Output if trimming is exectuted (i.e. no --bash or --slurm argument):
 # Output: (1) Trimmed Reads (in <base_dir>/Reads/TrimReads/<Taxon>/<Read_Basename>_Trim.fastq.gz
 # Output: (2) Trim Log (in <base_dir>/Reads/RawReads/trimOutput)
-# Output: (3) FastQC output for all raw + trimmed read sets (in <base_dir>/Reads/RawReads/fastqcOutput & <base_dir>/Reads/TrimReads/fastqcOutput)
+# Output: (3) FastQC output [unless disabled via --noqc] for all raw + trimmed read sets (in <base_dir>/Reads/RawReads/fastqcOutput & <base_dir>/Reads/TrimReads/fastqcOutput)
+
+# Output if trim scripts are requested (e.g. through --bash or --slurm):
+# Output: (1A): If --bash is specified, trim script (SISRS_Trim_Scripts.sh) will be saved to 'scripts' directory as a BASH script
+# Output: (1B): If --slurm is specified, trim script with SLURM header (SISRS_Trim_Scripts_SLURM.sh) will be saved to 'scripts' directory as a SLURM script [Note: SLURM script has a default time of 48h; Change if necessary]
 
 import os
 from os import path
@@ -15,58 +25,98 @@ import sys
 from glob import glob
 import subprocess
 from subprocess import check_call
+import argparse
 
-processors = 1
-if len(sys.argv) > 1:
-    processors = sys.argv[1]
-
-#Set cwd to script location
+# Set cwd to script location
 script_dir = sys.path[0]
 
-#Find BBDuk + Adapter File
+# Find BBDuk + Adapter File
 cmd = ['which', 'bbduk.sh']
 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 o, e = proc.communicate()
 bbduk_adapter = path.dirname(o.decode('ascii'))+"/resources/adapters.fa"
 
-#Set RawRead and TrimRead directories based off of script folder location
+# Set RawRead and TrimRead directories based off of script folder location
 raw_read_dir = path.dirname(path.abspath(script_dir))+"/Reads/RawReads"
 trim_read_dir = path.dirname(path.abspath(script_dir))+"/Reads/TrimReads"
 
-#Find taxa folders within RawRead folder
+# Find taxa folders within RawRead folder
 raw_read_tax_dirs = sorted(glob(raw_read_dir+"/*/"))
 
-#Create folder for BBDuk StdOut
+# Get taxon ID file location
+my_parser = argparse.ArgumentParser()
+my_parser.add_argument('-p','--processors',action='store',default=1)
+my_parser.add_argument('--skipqc',action='store_true')
+my_parser.add_argument('--bash',action='store_true')
+my_parser.add_argument('--slurm',action='store_true')
+
+args = my_parser.parse_args()
+
+processors = args.processors
+run_qc = not args.skipqc
+check_bash = args.bash
+check_slurm = args.slurm
+
+# Create script file
+if check_slurm or check_bash:
+    f= open(script_dir+"/SISRS_Trim_Script.sh","w+")
+
+if check_slurm: # Generate SLURM header
+
+    slurm_header = """#!/bin/bash
+#SBATCH --job-name="SISRS_Trim"
+#SBATCH --time=48:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=PROCESSORS
+cd $SLURM_SUBMIT_DIR
+"""
+    keyList = ['PROCESSORS']
+    keyDict = {'PROCESSORS':str(int(processors))}
+
+    for key in keyList:
+        slurm_header = slurm_header.replace(key,keyDict[key])
+    f.write(slurm_header)
+    f.write("\n")
+
+elif check_bash:
+    f.write("#!/bin/bash")
+    f.write("\n")
+
+# Create folder for BBDuk StdOut
 if(not path.isdir(raw_read_dir+"/trimOutput")):
     os.mkdir(raw_read_dir+"/trimOutput")
-trim_output = raw_read_dir+"/trimOutput/"
+trim_output = raw_read_dir+"/trimOutput/"    
 
-#Create folder for Raw FastQC output
+# Create folder for Raw FastQC output
 if(not path.isdir(raw_read_dir+"/fastqcOutput")):
     os.mkdir(raw_read_dir+"/fastqcOutput")
 raw_fastqc_output = raw_read_dir+"/fastqcOutput/"
 
-#Create folder for Trimmed FastQC output
+# Create folder for Trimmed FastQC output
 if(not path.isdir(trim_read_dir+"/fastqcOutput")):
     os.mkdir(trim_read_dir+"/fastqcOutput")
 trim_fastqc_output = trim_read_dir+"/fastqcOutput/"
-
-#Ensure Trim Log/FastQC output directories not included in taxa list
+    
+# Ensure Trim Log/FastQC output directories not included in taxa list
 raw_read_tax_dirs = [x for x in raw_read_tax_dirs if not x.endswith('trimOutput/')]
 raw_read_tax_dirs = [x for x in raw_read_tax_dirs if not x.endswith('fastqcOutput/')]
+    
+# Run FastQC on all raw read files, using all available processors
+if run_qc:
+    raw_fastqc_command = [
+        'fastqc',
+        '-t',
+        '{}'.format(processors),
+        '-o',
+        '{}'.format(raw_fastqc_output),
+        '{}/*/*.fastq.gz'.format(raw_read_dir)]
 
-#Run FastQC on all trimmed files, using all available processors
-raw_fastqc_command = [
-    'fastqc',
-    '-t',
-    '{}'.format(processors),
-    '-o',
-    '{}'.format(raw_fastqc_output)]
-
-for x in glob(raw_read_dir+"/*/*.fastq.gz"):
-    raw_fastqc_command.append(x)
-
-check_call(raw_fastqc_command)
+    if check_bash or check_slurm:
+        f.write("# Raw FastQC\n")
+        f.write(' '.join(raw_fastqc_command))
+        f.write("\n\n# Trim Scripts\n")
+    else:
+        os.system(' '.join(raw_fastqc_command))
 
 #For each taxa directory...
 for tax_dir in raw_read_tax_dirs:
@@ -123,7 +173,12 @@ for tax_dir in raw_read_tax_dirs:
                 'ow=t',
                 '&>',
                 '{outDir}out_{fileName}_Trim'.format(outDir=trim_output,fileName=path.basename(x))]
-            check_call(se_trim_command)
+            
+            if not check_bash and not check_slurm:
+                check_call(se_trim_command)
+            else:
+                f.write(' '.join(se_trim_command))
+                f.write("\n")
 
     #Trim paired-end files if present...
     if(len(left_pairs) == len(right_pairs) & len(left_pairs) > 0):
@@ -149,17 +204,29 @@ for tax_dir in raw_read_tax_dirs:
                 'ow=t',
                 '&>',
                 '{outDir}out_{fileName}_Trim'.format(outDir=trim_output,fileName=file_name)]
-            check_call(pe_trim_command)
+            
+            if not check_bash and not check_slurm:
+                check_call(pe_trim_command)
+            else:
+                f.write(' '.join(pe_trim_command))
+                f.write("\n")
 
-#Run FastQC on all trimmed files, using all available processors
-trim_fastqc_command = [
-    'fastqc',
-    '-t',
-    '{}'.format(processors),
-    '-o',
-    '{}'.format(trim_fastqc_output)]
+if run_qc: # Run FastQC on all trimmed files, using all available processors
 
-for x in glob(trim_read_dir+"/*/*.fastq.gz"):
-    trim_fastqc_command.append(x)
+    trim_fastqc_command = [
+        'fastqc',
+        '-t',
+        '{}'.format(processors),
+        '-o',
+        '{}'.format(trim_fastqc_output),
+        '{}/*/*.fastq.gz'.format(trim_read_dir)]
 
-check_call(trim_fastqc_command)
+    if check_bash or check_slurm:
+        f.write("\n# Trim FastQC\n")
+        f.write(' '.join(trim_fastqc_command))
+        f.write("\n")
+    else:
+        os.system(' '.join(trim_fastqc_command))
+
+if check_slurm or check_bash:
+    f.close()
