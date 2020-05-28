@@ -6,7 +6,7 @@
 python 01_sisrs_folder_setup.py --tid Test_Data/Taxon_IDs
 
 # Move reads to raw read directory
-cp -rf Test_Data/* ../Reads/RawReads/
+cp -rf Test_Data/RawReads/* ../Reads/RawReads/
 
 # Trim reads with FastQC analysis with 1 processor
 python 02_sisrs_read_trimmer.py --processors 1
@@ -23,3 +23,7 @@ python 06_sisrs_run_mapping.py
 
 # Output final alignments, and filter datasets down to those with 0, 1, or 2 species missing per site
 python 07_sisrs_output_alignment.py -m 0 1 2
+
+# Map SISRS contigs from Homo sapiens (HomSap) onto Homo sapiens Chromosome 17 (HomSap_Chr17) using 1 processors
+cp /home/ralubuntu/Work/test_SISRS/SISRS_Walkthrough/scripts/Test_Data/Reference_Genome/*bt2 ../Reference_Genome
+python 08_sisrs_reference_mapping.py -p 1 -r HomSap_Chr17 -t HomSap
