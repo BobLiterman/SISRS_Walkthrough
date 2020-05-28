@@ -1,0 +1,2 @@
+#Rank	FirstSequence	LastSequence	NumberOfSequences
+0	0	18446744073709551615	0

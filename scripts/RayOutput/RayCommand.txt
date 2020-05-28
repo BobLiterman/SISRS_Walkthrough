@@ -1,0 +1,6 @@
+mpiexec -n 1 Ray \
+ -k \
+ 31 \
+ -s \
+ -o \
+ /home/ralubuntu/Work/test_SISRS/SISRS_Walkthrough/Ray_Composite_Genome

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set up folder structure using Taxon ID file
-python 01_sisrs_folder_setup.py --tid ../Test_Data/Taxon_IDs
+python 01_sisrs_folder_setup.py --tid Test_Data/Taxon_IDs
 
 # Move reads to raw read directory
 cp -rf Test_Data/* ../Reads/RawReads/
