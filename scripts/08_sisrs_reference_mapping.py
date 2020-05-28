@@ -15,6 +15,8 @@ from glob import glob
 import pandas as pd
 from Bio import SeqIO
 import argparse
+import subprocess
+from subprocess import check_call
 
 # Set script directory
 script_dir = sys.path[0]
@@ -46,8 +48,8 @@ check_bash = args.bash
 check_slurm = args.slurm
 
 # Create script file
-if check_slurm or check_bash:
-    f= open(script_dir+"/Reference_Genome_Mapping.sh","w+")
+
+f= open(mapping_dir+"/Reference_Genome_Mapping.sh","w+")
 
 if check_slurm: # Generate SLURM header
 
@@ -103,8 +105,11 @@ keyDict = {'PROCESSORS':str(processors),
 for key in keyList:
     ref_map_template = ref_map_template.replace(key,keyDict[key])
 
+f.write(ref_map_template)
 if check_bash or check_slurm:
-    f.write(ref_map_template)
     f.close()
 else:
-    print("run")
+    with open(mapping_dir+"/out_Reference_Genome_Mapping","w") as file:
+        f.close()
+        cmd = mapping_dir+'/Reference_Genome_Mapping.sh'
+        subprocess.call(['sh',cmd],stdout=file, stderr=subprocess.PIPE)
