@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Script takes ~10 minutes with 1 processor
+
 # Set up folder structure using Taxon ID file
 python 01_sisrs_folder_setup.py --tid Test_Data/Taxon_IDs
 
