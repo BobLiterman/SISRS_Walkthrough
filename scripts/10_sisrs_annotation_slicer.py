@@ -119,5 +119,5 @@ for locFile in locsToProcess:
                         slice_dir]
         output = subprocess.check_output(' '.join(slice_command), shell=True).decode(sys.stdout.encoding).strip()
         with open(slice_dir+"/out_"+dataname+"_"+locname, 'w') as outfile:
-            print(output+"\n")
+            print("\n"+output+"\n")
             print(output,file=outfile)
