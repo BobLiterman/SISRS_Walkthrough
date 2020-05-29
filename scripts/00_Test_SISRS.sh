@@ -25,5 +25,8 @@ python 06_sisrs_run_mapping.py
 python 07_sisrs_output_alignment.py --missing 0 1 2
 
 # Map SISRS contigs from Homo sapiens (HomSap) onto Homo sapiens Chromosome 17 (HomSap_Chr17) using 1 processors
-cp /home/ralubuntu/Work/test_SISRS/SISRS_Walkthrough/scripts/Test_Data/Reference_Genome/*bt2 ../Reference_Genome
+cp Test_Data/Reference_Genome/*bt2 ../Reference_Genome
 python 08_sisrs_reference_mapping.py --processors 1 --reference HomSap_Chr17 --taxon HomSap
+
+# Extract SISRS sites that map uniquely to the reference genome
+python 09_sisrs_alignment_slicer.py --alignment ../SISRS_Run/alignment_bi_m0_nogap.phylip-relaxed -locs ../SISRS_Run/alignment_bi_locs_m0_nogap.txt -subsetlocs ../Reference_Genome/Mapping/HomSap_NonDup_Genome_Sites --name Hg17_Mapped --outputdir ../Reference_Genome/Hg17_Mapped 

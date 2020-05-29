@@ -91,6 +91,8 @@ python SCRIPT_DIR/Genome_Mapper.py MAPPING_DIR/TAXON_MapData.tsv
 sort -k 1,1 -k2,2n MAPPING_DIR/Whole_Genome_Mapping/WholeGenome_TAXON_Mapped_NonDup.bed -o MAPPING_DIR/Whole_Genome_Mapping/WholeGenome_TAXON_Mapped_NonDup.bed
 
 cut -f4 MAPPING_DIR/Whole_Genome_Mapping/WholeGenome_TAXON_Mapped_NonDup.bed | sort > MAPPING_DIR/TAXON_NonDup_Genome_Sites
+
+bedtools merge -i MAPPING_DIR/Whole_Genome_Mapping/WholeGenome_TAXON_Mapped_NonDup.bed > MAPPING_DIR/Whole_Genome_Mapping/WholeGenome_TAXON_Mapped_NonDupMerged.bed
 """
 
 keyList = ['PROCESSORS','REFERENCE_DIR','INDEX_NAME','CONTIGS','MAPPING_DIR','TAXON','SCRIPT_DIR']

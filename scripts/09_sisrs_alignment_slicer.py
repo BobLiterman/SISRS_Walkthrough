@@ -24,6 +24,7 @@ from Bio.Alphabet import generic_alphabet,generic_dna
 from Bio.Align import MultipleSeqAlignment, AlignInfo
 from Bio import AlignIO, SeqIO
 import pandas as pd
+import argparse
 
 def translateGaps(seq):
     seqList = list(seq)
@@ -31,16 +32,39 @@ def translateGaps(seq):
     seq = ''.join(str(x) for x in seqList)
     return seq
 
+# Get arguments
+my_parser = argparse.ArgumentParser()
+my_parser.add_argument('-a','--alignment',action='store',required=True)
+my_parser.add_argument('-l','--locs',action='store',required=True)
+my_parser.add_argument('-s','--subsetlocs',action='store',required=True)
+my_parser.add_argument('-n','--name',action='store',required=True)
+my_parser.add_argument('-o','--outputdir',action='store',nargs="?")
+
+args = my_parser.parse_args()
+
+alignment=os.path.abspath(args.alignment)
+locs=os.path.abspath(args.locs)
+subsetLocs=os.path.abspath(args.subsetlocs)
+siteid=str(args.name)
+
+dataPath=os.path.dirname(os.path.abspath(subsetLocs))
+
+if args.outputdir is not None:
+    outputdir=args.outputdir
+else:
+    outputdir=os.path.dirname(os.path.abspath(subsetLocs))
+
+if(not path.isdir(outputdir)):
+    os.mkdir(outputdir)
+
 #Read in loc list of original alignment
-originalLocs=pd.read_csv(sys.argv[1],header=None)
+originalLocs=pd.read_csv(locs,header=None)
 
 originalLocs.columns=['Original']
 
 #Read in desired sites to be sliced out
-with open(sys.argv[2], 'r') as f:
+with open(subsetLocs, 'r') as f:
     sitesOfInterest = f.read().splitlines()
-
-dataPath = os.path.dirname(os.path.abspath(sys.argv[2]))
 
 #Filter original loci to only include sites of interests, create index-based bi-directional dictionary
 newLocs = originalLocs[originalLocs['Original'].isin(sitesOfInterest)]
@@ -52,12 +76,9 @@ newLocDict = dict(zip(biKey,biVal))
 
 #Read in original alignment to be sliced
 formats = {'nex':'nexus', 'phy':'phylip-relaxed', 'fa':'fasta', 'phylip-relaxed':'phylip-relaxed'}
-fformat = formats[sys.argv[3].split('.')[-1]]
-originalData = AlignIO.read(sys.argv[3],fformat)
+fformat = formats[alignment.split('.')[-1]]
+originalData = AlignIO.read(alignment,fformat)
 originalData_Dict = SeqIO.to_dict(originalData)
-
-#Get dataset name for output
-siteID = str(sys.argv[4])
 
 #Get species
 species = originalData_Dict.keys()
@@ -91,12 +112,12 @@ for record in newDNA:
     record.seq=Seq(dnaList[i],generic_dna)
     i+=1
 
-dnaLocfile = open(dataPath + '/' + siteID + '_NoGaps_LocList.txt', 'w')
+dnaLocfile = open(outputdir + '/' + siteID + '_NoGaps_LocList.txt', 'w')
 dnaLocfile.write("\n".join(dnaLocs))
 dnaLocfile.close()
 
-SeqIO.write(newDNA, dataPath + '/' + siteID + '_NoGaps.phylip-relaxed', "phylip-relaxed")
-print(' - ' + str(originalLocs.shape[0]) + ' sites from \'' + os.path.basename(sys.argv[3]) + '\' were reduced to ' + str(newDNA.get_alignment_length()) + ' gappless sites (Dataset: ' + siteID + '). A gap-free alignment file has been generated in ' + dataPath + '/' + siteID + '_NoGaps.phylip-relaxed')
+SeqIO.write(newDNA, outputdir + '/' + siteID + '_NoGaps.phylip-relaxed', "phylip-relaxed")
+print(' - ' + str(originalLocs.shape[0]) + ' sites from \'' + os.path.basename(alignment) + '\' were reduced to ' + str(newDNA.get_alignment_length()) + ' gappless sites (Dataset: ' + siteID + '). A gap-free alignment file has been generated in ' + outputdir + '/' + siteID + '_NoGaps.phylip-relaxed')
 
 #Create gap dataset
 if len(gapLocs)>0:
@@ -130,28 +151,28 @@ if len(gapLocs)>0:
         record.seq=Seq(gapRecodeList[i],generic_alphabet)
         i+=1
 
-    gapLocfile = open(dataPath + '/' + siteID + '_Gapped_LocList.txt', 'w')
+    gapLocfile = open(outputdir + '/' + siteID + '_Gapped_LocList.txt', 'w')
     gapLocfile.write("\n".join(gapLocs))
     gapLocfile.close()
 
-    comboLocfile = open(dataPath + '/' + siteID + '_AllSites_LocList.txt', 'w')
+    comboLocfile = open(outputdir + '/' + siteID + '_AllSites_LocList.txt', 'w')
     allLocs = dnaLocs + gapLocs
     comboLocfile.write("\n".join(allLocs))
     comboLocfile.close()
 
-    SeqIO.write(newGapRecode, dataPath + '/' + siteID + '_RecodedGaps.phylip-relaxed', "phylip-relaxed")
-    SeqIO.write(newDNA + newGap, dataPath + '/' + siteID + '_AllSites.phylip-relaxed', "phylip-relaxed")
+    SeqIO.write(newGapRecode, outputdir + '/' + siteID + '_RecodedGaps.phylip-relaxed', "phylip-relaxed")
+    SeqIO.write(newDNA + newGap, outputdir + '/' + siteID + '_AllSites.phylip-relaxed', "phylip-relaxed")
 
-    partitionFile = open(dataPath + '/' + siteID + '_Partition.nex', 'w')
+    partitionFile = open(outputdir + '/' + siteID + '_Partition.nex', 'w')
     partitionFile.write('#nexus\n')
     partitionFile.write('begin sets;\n')
-    partitionFile.write('\tcharset part1 = ' + dataPath +  '/' + siteID + '_NoGaps.phylip-relaxed:*;\n')
-    partitionFile.write('\tcharset part2 = ' + dataPath +  '/' + siteID + '_RecodedGaps.phylip-relaxed:*;\n')
+    partitionFile.write('\tcharset part1 = ' + outputdir +  '/' + siteID + '_NoGaps.phylip-relaxed:*;\n')
+    partitionFile.write('\tcharset part2 = ' + outputdir +  '/' + siteID + '_RecodedGaps.phylip-relaxed:*;\n')
     partitionFile.write('\tcharpartition mine = GTR+G+ASC:part1, GTR2+ASC:part2;\n')
     partitionFile.write('end;')
     partitionFile.close()
 
-    print(' - ' + str(newGapRecode.get_alignment_length()) + ' selected sites from \'' + os.path.basename(sys.argv[3]) + '\' contained potentially informative gap positions. A binary coded gap alignment file and a nexus partition file have been generated in ' + dataPath + '/' + siteID + '_RecodedGaps.phylip-relaxed/' + siteID + '_Partition.nex')
+    print(' - ' + str(newGapRecode.get_alignment_length()) + ' selected sites from \'' + alignment + '\' contained potentially informative gap positions. A binary coded gap alignment file and a nexus partition file have been generated in ' + outputdir + '/' + siteID + '_RecodedGaps.phylip-relaxed/' + siteID + '_Partition.nex')
     print(' - To facilitate site-split analysis, a DNA/Gap combined alignment has been generated in ' + dataPath + '/' + siteID + '_AllSites.phylip-relaxed')
 else:
     print(' - No informative gap positions were identified in the ' + siteID + ' dataset. The gapless alignment can be used for both tree-building and site-split analyses.')
