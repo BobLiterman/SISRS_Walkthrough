@@ -15,12 +15,6 @@ from itertools import islice
 import argparse
 import subprocess
 
-def file_len(fname):
-    with open(fname) as f:
-        for i, l in enumerate(f):
-            pass
-    return i + 1
-
 # Set script location
 script_dir = sys.path[0]
 base_dir = path.dirname(path.abspath(script_dir))
@@ -29,7 +23,7 @@ annotation_dir = reference_dir + "/Annotation"
 loc_dir = annotation_dir + "/Locs"
 slice_dir = annotation_dir + "/Sliced_Alignments"
 
-whole_genome_map = glob(reference_dir+'Mapping/Whole_Genome_Mapping/*_Mapped_NonDup.bed')
+whole_genome_map = str(glob(reference_dir+'/Mapping/Whole_Genome_Mapping/*_Mapped_NonDup.bed')[0])
 
 if not os.path.isdir(annotation_dir):
     sys.exit("No annotation directory found at "+annotation_dir+" ...exiting...")
@@ -45,8 +39,8 @@ my_parser.add_argument('-n','--name',action='store',nargs="?")
 my_parser.add_argument('-ow','--overwrite',action='store_true')
 args = my_parser.parse_args()
 
-alignment=args.alignment
-locs=args.locs
+alignment=os.path.abspath(args.alignment)
+locs=os.path.abspath(args.locs)
 overwrite=args.overwrite
 
 if args.name is not None:
@@ -108,7 +102,7 @@ locsToProcess = [loc_dir+"/"+x+"_Locs" for x in bed_file_names]
 
 for locFile in locsToProcess:
     locname = os.path.basename(locFile).replace('_Locs','')
-    if file_len(locFile) == 0:
+    if os.stat(locFile).st_size == 0:
         print("No overlapping sites between " + alignment + " and "+ locname)
     else:
         slice_command = ['python',
@@ -125,4 +119,5 @@ for locFile in locsToProcess:
                         slice_dir]
         output = subprocess.check_output(' '.join(slice_command), shell=True).decode(sys.stdout.encoding).strip()
         with open(slice_dir+"/out_"+dataname+"_"+locname, 'w') as outfile:
+            print(output+"\n")
             print(output,file=outfile)
