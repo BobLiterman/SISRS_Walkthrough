@@ -100,6 +100,9 @@ for annotationFile in bed_file_paths:
 
 locsToProcess = [loc_dir+"/"+x+"_Locs" for x in bed_file_names]
 
+if len(locsToProcess):
+    sys.exit("No new BED files to process. Use --overwrite to reanalyze existing annotation data.")
+
 for locFile in locsToProcess:
     locname = os.path.basename(locFile).replace('_Locs','')
     if os.stat(locFile).st_size == 0:
