@@ -45,7 +45,7 @@ args = my_parser.parse_args()
 alignment=os.path.abspath(args.alignment)
 locs=os.path.abspath(args.locs)
 subsetLocs=os.path.abspath(args.subsetlocs)
-siteid=str(args.name)
+siteID=str(args.name)
 
 dataPath=os.path.dirname(os.path.abspath(subsetLocs))
 
@@ -54,7 +54,7 @@ if args.outputdir is not None:
 else:
     outputdir=os.path.dirname(os.path.abspath(subsetLocs))
 
-if(not path.isdir(outputdir)):
+if(not os.path.isdir(outputdir)):
     os.mkdir(outputdir)
 
 #Read in loc list of original alignment
