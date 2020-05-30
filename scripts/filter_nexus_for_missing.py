@@ -88,6 +88,6 @@ def main(alignment_filename, missing_str):
 
 
 if __name__ == '__main__':
-    alignment_filename = sys.argv[1]
+    alignment_filename = os.path.abspath(sys.argv[1])
     missing_str = sys.argv[2]
     main(alignment_filename, missing_str)
