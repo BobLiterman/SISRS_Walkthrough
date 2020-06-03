@@ -53,14 +53,14 @@ if args.name is not None:
 else:
     dataname = os.path.basename(alignment).rsplit(".",1)[0]
 
-if not ignore:
+if not args.ignore:
     ignore_list=[]
 else:
-    ignore_list=[annotation_dir+"/"+x+".bed" for x in args.ignore]
+    ignore_list=args.ignore
     # In case user specifies .bed
-    ignore_list=[x.replace(".bed.bed",".bed") for x in ignore_list]
+    ignore_list=[x.replace(".bed","") for x in ignore_list]
 
-    for ig in args.ignore:
+    for ig in ignore_list:
         print('Ignorning annotation file '+ig+'.bed...')
     
 # Find BED files    

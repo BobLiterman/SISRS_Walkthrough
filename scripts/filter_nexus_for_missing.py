@@ -12,6 +12,7 @@
 
 from __future__ import division
 import sys
+import os
 from os import path
 import linecache
 from Bio.Seq import Seq
