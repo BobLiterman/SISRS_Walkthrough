@@ -40,6 +40,14 @@ PIBS alignments have been shown to perform well for tree building using RAxML an
 The following programs must be installed and in the user path:  
 1) Python 3.6+ (with Biopython)  
 2) Ray (tested with v2.3.2-devel; Requires working version of mpirun even if using a single node)  
+    - Note: In order to use .gz files with Ray, it must be compiled with .gz support.  
+```
+git clone https://github.com/sebhtml/RayPlatform.git
+git clone https://github.com/sebhtml/ray.git
+cd ray
+make PREFIX=ray-build HAVE_LIBZ=y LDFLAGS="-lpthread -lz"
+make install
+```
 3) Bowtie2 (tested with v2.3.4)  
 4) Samtools (tested with v.1.3.1)  
 5) BBMap (tested with v.38.73)  
