@@ -7,7 +7,7 @@
 # Arguments: -p/--processors: Number of available processors per node [Default: 1]
 # Arguments: -m/--minread: Minimum read coverage to call a base [Default: 3]
 # Arguments: -t/--threshold: Percent homozygosity required to call a base [Default: 1 (all reads must support a single base)]
-# Arguments: --slurm (OPTIONAL): Add SLURM header to mapping scripts
+# Arguments: -s/--slurm (OPTIONAL): Provide the path to a file that contains a SLURM header for mapping scripts
 # Output: Creates composite genome data and mapping scripts into 'SISRS_Run' directory
 
 import os
@@ -17,23 +17,24 @@ from glob import glob
 import pandas as pd
 from Bio import SeqIO
 import argparse
+import re
 
 # Set script directory
-script_dir = sys.path[0]
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Get arguments
 my_parser = argparse.ArgumentParser()
 my_parser.add_argument('-p','--processors',action='store',default=1,nargs="?")
 my_parser.add_argument('-m','--minread',action='store',default=3,nargs="?")
 my_parser.add_argument('-t','--threshold',action='store',default=1,nargs="?")
-my_parser.add_argument('--slurm',action='store_true')
+my_parser.add_argument('-s','--slurm',action='store', required=False, nargs="?")
 
 args = my_parser.parse_args()
 
 processors = args.processors
 minread = int(args.minread)
 threshold = float(args.threshold)
-check_slurm = args.slurm
+
 
 #Set TrimRead + SISRS directories based off of script folder location
 trim_read_dir = path.dirname(path.abspath(script_dir))+"/Reads/TrimReads"
@@ -92,13 +93,14 @@ with open(composite_dir +"/contigs_SeqLength.tsv","r") as filein:
             siteCount+=1
 locListFile.close()
 
-slurm_header = """#!/bin/bash
-#SBATCH --job-name="TAXA"
-#SBATCH --time=48:00:00
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=PROCESSORS
-cd $SLURM_SUBMIT_DIR
-"""
+try: 
+    args.slurm
+    slurm_header = ["#!/bin/bash\n"]
+    with open(args.slurm) as origin_file:
+        for line in origin_file:
+            if re.search(r'SBATCH', line):
+                slurm_header.append(line)
+    slurm_header.append("cd $SLURM_SUBMIT_DIR")
 
 sisrs_template = """bowtie2 -p PROCESSORS -N 1 --local -x BOWTIE2-INDEX -U READS | samtools view -Su -@ PROCESSORS -F 4 - | samtools sort -@ PROCESSORS - -o SISRS_DIR/TAXA/TAXA_Temp.bam
 samtools view -@ PROCESSORS -H SISRS_DIR/TAXA/TAXA_Temp.bam > SISRS_DIR/TAXA/TAXA_Header.sam
@@ -130,17 +132,10 @@ python SCRIPT_DIR/get_pruned_dict.py SISRS_DIR/TAXA COMPOSITE_DIR MINREAD THRESH
 #Create links to trimmed read files in SISRS_Run directory
 for tax_dir in trim_read_tax_dirs:
     taxa = path.basename(tax_dir[:-1])
-    read_link_command = [
-        'cd',
-        '{}'.format(sisrs_dir+"/"+taxa),
-        ';',
-        'cp',
-        '-as',
-        '{}/*.fastq.gz'.format(tax_dir),
-        '.']
+    read_link_command = ['mkdir', '{}'.format(sisrs_dir+"/"+taxa)]
     os.system(" ".join(read_link_command))
     
-    new_slurm = slurm_header
+    new_slurm = "".join(slurm_header)
     new_sisrs = sisrs_template
 
     keyList = ['PROCESSORS','BOWTIE2-INDEX','COMPOSITE_GENOME','SCRIPT_DIR','MINREAD','THRESHOLD','TAXA','SISRS_DIR','COMPOSITE_DIR','READS']
@@ -159,10 +154,11 @@ for tax_dir in trim_read_tax_dirs:
         new_slurm = new_slurm.replace(key,keyDict[key])
     
     with open(sisrs_dir+"/"+taxa+"/"+taxa+".sh", "w") as text_file:
-        if check_slurm:
+        try: 
+            args.slurm
             print(new_slurm,file=text_file)
             print(new_sisrs, file=text_file)
-        else:
+        except:
             print("#!/bin/bash", file=text_file)
             print(new_sisrs, file=text_file)
             os.system('chmod +x '+sisrs_dir+"/"+taxa+"/"+taxa+".sh")
