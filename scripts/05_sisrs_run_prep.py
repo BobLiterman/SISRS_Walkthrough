@@ -103,6 +103,8 @@ try:
             if re.search(r'module', line):
                 slurm_header.append(line)
     slurm_header.append("cd $SLURM_SUBMIT_DIR")
+except:
+    pass
 
 sisrs_template = """bowtie2 -p PROCESSORS -N 1 --local -x BOWTIE2-INDEX -U READS | samtools view -Su -@ PROCESSORS -F 4 - | samtools sort -@ PROCESSORS - -o SISRS_DIR/TAXA/TAXA_Temp.bam
 samtools view -@ PROCESSORS -H SISRS_DIR/TAXA/TAXA_Temp.bam > SISRS_DIR/TAXA/TAXA_Header.sam
