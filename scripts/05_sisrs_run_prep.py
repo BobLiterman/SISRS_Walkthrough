@@ -100,6 +100,8 @@ try:
         for line in origin_file:
             if re.search(r'SBATCH', line):
                 slurm_header.append(line)
+            if re.search(r'module', line):
+                slurm_header.append(line)
     slurm_header.append("cd $SLURM_SUBMIT_DIR")
 
 sisrs_template = """bowtie2 -p PROCESSORS -N 1 --local -x BOWTIE2-INDEX -U READS | samtools view -Su -@ PROCESSORS -F 4 - | samtools sort -@ PROCESSORS - -o SISRS_DIR/TAXA/TAXA_Temp.bam
