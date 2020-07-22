@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-# This script prepares data for a SISRS run by setting the data up and creating mapping scripts
-# Contigs are renamed and moved to the SISRS_Run/Composite_Genome directory
-# The composite genome is indexed by Bowtie2 and Samtools
-# SISRS scripts are generated from a template and saved to the SISRS_Run/TAXA folder
+# This script outputs the final alignments
 # Arguments: -m/--missing (OPTIONAL): Number(s) of taxa allowed to have missing data in final alignment; Must be less than total species count - 2
 # Output: Alignments containing all variable and parsimony-informative sites, along with filtered alignments if requested
 

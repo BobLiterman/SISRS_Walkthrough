@@ -42,6 +42,7 @@ The following programs must be installed and in the user path:
 2) Ray (tested with v2.3.2-devel; Requires working version of mpirun even if using a single node)  
     - Note: In order to use .gz files with Ray, it must be compiled with .gz support.  
 ```
+#If you need to install Ray
 git clone https://github.com/sebhtml/RayPlatform.git
 git clone https://github.com/sebhtml/ray.git
 cd ray
@@ -163,7 +164,7 @@ These instructions describe how to run SISRS 'manually', in step-by-step fashion
     python scripts/05_sisrs_run_prep.py --processors 10 --minread 5 --threshold 1     
       
     # Prepare SLURM scripts for use with 20 processors, with bases only called at 50X coverage with 98% homozygosity within species (i.e. allow for rare sequencing errors in high-depth data)
-    python scripts/05_sisrs_run_prep.py --processors 20 --minread 50 --threshold 0.98 --slurm 
+    python scripts/05_sisrs_run_prep.py --processors 20 --minread 50 --threshold 0.98 --slurm [name of file with appropriate slurm header] 
     ```  
 9. **Run Mapping Scripts:** Once the mapping scripts are generated in the analysis directory species folders (<BASE_DIR>/SISRS_Run/<SPECIES>), they can be submitted in a number of ways. These scripts are independent from one another, which is why we leave the option to submit them to the user. If you want to just submit them to run one after another (not recommended for large datasets when parallel processing is available, as run-time is significantly increased), you can use the SISRS run mapping script:  
     ```
