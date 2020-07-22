@@ -17,7 +17,7 @@ import argparse
 import subprocess
 
 # Set script location
-script_dir = sys.path[0]
+script_dir = os.path.dirname(os.path.abspath(__file__))
 base_dir = path.dirname(path.abspath(script_dir))
 reference_dir = base_dir + "/Reference_Genome"
 annotation_dir = reference_dir + "/Annotation"

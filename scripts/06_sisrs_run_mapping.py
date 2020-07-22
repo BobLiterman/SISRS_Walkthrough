@@ -9,7 +9,7 @@ from glob import glob
 import subprocess
 
 #Set cwd to script location
-script_dir = sys.path[0]
+script_dir = os.path.dirname(os.path.abspath(__file__))
 base_dir = path.dirname(path.abspath(script_dir))
 
 sisrs_dir = base_dir+"/SISRS_Run"

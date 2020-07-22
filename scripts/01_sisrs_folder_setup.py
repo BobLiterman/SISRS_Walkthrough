@@ -9,7 +9,7 @@ from os import path
 import argparse
 
 # Set script dir and SISRS dir location 
-script_dir = sys.path[0]
+script_dir = os.path.dirname(os.path.abspath(__file__))
 base_dir = path.dirname(path.abspath(script_dir))
 
 # Get taxon ID file location

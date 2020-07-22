@@ -19,7 +19,7 @@ import subprocess
 from subprocess import check_call
 
 # Set script directory
-script_dir = sys.path[0]
+script_dir = os.path.dirname(os.path.abspath(__file__))
 base_dir = path.dirname(path.abspath(script_dir))
 
 #Create genome mapping folder

@@ -13,7 +13,7 @@ from itertools import islice
 import argparse
 
 # Set script location
-script_dir = sys.path[0]
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 #Set TrimRead + SISRS directories based off of script folder location
 sisrs_dir = path.dirname(path.abspath(script_dir))+"/SISRS_Run"

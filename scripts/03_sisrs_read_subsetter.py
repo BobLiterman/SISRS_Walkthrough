@@ -21,7 +21,7 @@ import re
 import argparse
 
 #Set cwd to script location
-script_dir = sys.path[0]
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 #Get Genome size estimate
 my_parser = argparse.ArgumentParser()
