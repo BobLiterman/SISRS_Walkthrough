@@ -129,7 +129,17 @@ These instructions describe how to run SISRS 'manually', in step-by-step fashion
     # Output SLURM script, and request 10 processors
     python scripts/02_sisrs_read_trimmer.py --slurm --processors 10
     ```  
-5. **Check data QC:** Putting bad data into SISRS can have a negative impact on site calling, so check the FastQC output paying specific attention to high duplication rates or overrepresented sequences (i.e. non-random sequencing) and very low-quality regions. In many cases (except when sequencing depths are prohibitively low), it would often be better to have less total data that was high-quality by leaving some samples out, as opposed to including more poor-quality data.
+5. **Check data QC:** Putting bad data into SISRS can have a negative impact on site calling, so check the FastQC output paying specific attention to high duplication rates or overrepresented sequences (i.e. non-random sequencing) and very low-quality regions. In many cases (except when sequencing depths are prohibitively low), it would often be better to have less total data that was high-quality by leaving some samples out, as opposed to including more poor-quality data.  
+    - If data have high duplication rates, consider de-duplicating prior to composite genome assembly and mapping (https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/dedupe-guide/)  
+    - If, after trimming, reads still have low quality regions (common on the right end), consider an additional round of trimming with a force trim 
+      ```
+      bbduk.sh in=<LEFT> in2=<RIGHT> out=<RETRIM_LEFT> out2=<RETRIM_RIGHT> ftr=<Number of bases from right end to remove>
+      ```
+    - If, after trimming, reads still have adapters or overrepresented sequences, consider automatic adapter detection and re-trimming  
+      ```
+      bbmerge.sh in1=<LEFT> in2=<RIGHT> outa=<SAMPLE>_Adapters.fa
+      # These adapters can be used in place of, or in addition to, the default adapters that come with BBMap.
+      ```
 6. **Read Subsetting:** The SISRS composite genome is assembled using data sampled evenly among species, and within species, evenly among datasets. The final assembly target depth is ~10X relative to the genome size estimate for the group. To subset your data, run the read subsetting script.  
     ```
     # Arguments:
