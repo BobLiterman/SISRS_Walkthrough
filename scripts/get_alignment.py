@@ -10,9 +10,11 @@
         composite_dir -- Path to SISRS composite genome directory (no trailing /)
 
     output:
-        alignment.nex : nexus formatted alignment including position in composite reference genome; each site as up to num_missing missing data
-        alignment_bi.nex : above but only biallelic sites
-        alignment_pi.nex : above but only phylogenetically informative sites (no singletons)
+        alignment.nex : Nexus formatted alignment (including a header with composite genome position); each site has up to num_missing missing data
+        alignment_pi_singletons.nex : Of these, variable sites with possible singletons
+        alignment_pi.nex : Of these, variable sites without singletons
+        alignment_bi.nex : Of these, variable, biallelic sites without singletons
+        alignment_singletons.nex : Sites where the only variation is singleton in nature
 
 """
 
@@ -32,27 +34,64 @@ class Loc:
         self.flag = flag
 
 class Alignment:
-    def __init__(self,locations=[],species_data=dict(),flag=[],single=[]):
+    def __init__(self,locations=[],species_data=dict(),flag=[],singleton=[],othersingle=[],anysingle=[],biallelic=[]):
         self.locations = locations
         self.species_data = species_data
         self.flag = flag
-        self.single = single
+        self.singleton = singleton
+        self.othersingle = othersingle
+        self.anysingle = anysingle
+        self.biallelic = biallelic
 
     def numsnps(self):
-        print(str(len(self.locations))+' total variable sites (alignment.nex)')
+        print(str(len(self.locations))+' total variable sites [alignment.nex]')
         for i in range(len(self.locations)):
+            
+            # Get valid bases
             bases = [self.species_data[sp][i] for sp in self.species_data if self.species_data[sp][i] in ['A','C','G','T','-']]     #bases for that site
+            
+            # Count bases and sort by occurence
             c = Counter(bases).most_common(5)
-            if c[1][1]==1:
-                self.single.append(1)
-            else:
-                self.single.append(0)
-            self.flag.append(len(c))
+            unique_bases = len(c)
+            self.flag.append(unique_bases)
+            
+            sub_list = c[1:unique_bases]
+            
+            # Check for singletons
+            if all(x[1] == 1 for x in c):
+                self.singleton.append(1)
+                self.othersingle.append(0)
+                self.anysingle.append(1)
+                self.biallelic.append(0)
 
-        print(str(self.single.count(1))+' variable sites are singletons')
+            elif all([x[1] == 1 for x in sub_list]):
+                self.singleton.append(1)
+                self.othersingle.append(0)
+                self.anysingle.append(1)
+                self.biallelic.append(0)
+
+            elif any([x[1] == 1 for x in sub_list]):
+                self.singleton.append(0)
+                self.othersingle.append(1)
+                self.anysingle.append(1)
+                self.biallelic.append(0)
+    
+            else:
+                if unique_bases == 2:
+                    self.biallelic.append(1)
+                else:
+                    self.biallelic.append(0)
+                    
+                self.singleton.append(0)
+                self.othersingle.append(0)
+                self.anysingle.append(0)
+
+        print(str(self.singleton.count(1))+' variable sites are singletons (Invariant except for singletons) [alignment_singletons.nex]')
+        print(str(self.othersingle.count(1))+' variable sites contain singletons (Variable, but with 1 or more singletons) [alignment_pi_singletons.nex]')
+        print(str(self.anysingle.count(0))+' variable sites contain no singletons (Variable, parsimony-informative [alignment_pi.nex]')
+        print(str(self.biallelic.count(1))+' variable sites are biallelic, parsimony-informative sites [alignment_bi.nex]')
 
         return self.flag.count(2)       # number of biallelic sites
-
 
 def get_phy_sites(sisrs_dir,composite_dir,num_missing):
 
@@ -97,34 +136,60 @@ def write_alignment(fi,alignment,numbi):
 
     #Process alignment_bi.nex
     ALIGNMENTBI=open(fi.replace('.nex','_bi.nex'),'w')
-    bi_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2 and alignment.single[i] == 0]
+    bi_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if alignment.biallelic[i] == 1]
     bi_sp_data={}
     for species in spp:
-        bi_sp_data[species] = [alignment.species_data[species][i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2 and alignment.single[i] == 0]
+        bi_sp_data[species] = [alignment.species_data[species][i] for i in range(len(alignment.locations)) if alignment.biallelic[i] == 1]
 
     ALIGNMENTBI.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(len(bi_loc))+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')
     ALIGNMENTBI.write('[ '+ " ".join(bi_loc)+' ]'+"\n")
     for species in spp: #write sequences for each species
         ALIGNMENTBI.write(species+"\t"+("".join(bi_sp_data[species]))+"\n")
-    print(str(len(bi_loc))+' total biallelic sites excluding singletons (alignment_bi.nex)')
     ALIGNMENTBI.write(';\nend;')
     ALIGNMENTBI.close()
 
     #Process alignment_pi.nex
     ALIGNMENTPI=open(fi.replace('.nex','_pi.nex'),'w')
-    pi_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if alignment.single[i] == 0]
+    pi_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if alignment.anysingle[i] == 0]
     pi_sp_data={}
     for species in spp:
-        pi_sp_data[species] = [alignment.species_data[species][i] for i in range(len(alignment.locations)) if alignment.single[i] == 0]
+        pi_sp_data[species] = [alignment.species_data[species][i] for i in range(len(alignment.locations)) if alignment.anysingle[i] == 0]
 
     ALIGNMENTPI.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(len(pi_loc))+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')
     ALIGNMENTPI.write('[ '+ " ".join(pi_loc)+' ]'+"\n")
     for species in spp: #write sequences for each species
         ALIGNMENTPI.write(species+"\t"+("".join(pi_sp_data[species]))+"\n")
-    print(str(len(pi_loc))+' total variable sites excluding singletons (alignment_pi.nex)')
     ALIGNMENTPI.write(';\nend;')
     ALIGNMENTPI.close()
 
+    #Process alignment_pi_singletons.nex
+    ALIGNMENTPISINGLETONS=open(fi.replace('.nex','_pi_singletons.nex'),'w')
+    pi_singletons_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if (alignment.anysingle[i] == 0 or alignment.othersingle[i] == 1)]
+    pi_singletons_sp_data={}
+    for species in spp:
+        pi_singletons_sp_data[species] = [alignment.species_data[species][i] for i in range(len(alignment.locations)) if (alignment.anysingle[i] == 0 or alignment.othersingle[i] == 1)]
+
+    ALIGNMENTPISINGLETONS.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(len(pi_singletons_loc))+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')
+    ALIGNMENTPISINGLETONS.write('[ '+ " ".join(pi_singletons_loc)+' ]'+"\n")
+    for species in spp: #write sequences for each species
+        ALIGNMENTPISINGLETONS.write(species+"\t"+("".join(pi_singletons_sp_data[species]))+"\n")
+    ALIGNMENTPISINGLETONS.write(';\nend;')
+    ALIGNMENTPISINGLETONS.close()
+
+    #Process alignment_singletons.nex
+    ALIGNMENTSINGLETONS=open(fi.replace('.nex','_singletons.nex'),'w')
+    singletons_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if alignment.singleton[i] == 1]
+    singletons_sp_data={}
+    for species in spp:
+        singletons_sp_data[species] = [alignment.species_data[species][i] for i in range(len(alignment.locations)) if alignment.singleton[i] == 1]
+
+    ALIGNMENTSINGLETONS.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(len(singletons_loc))+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')
+    ALIGNMENTSINGLETONS.write('[ '+ " ".join(singletons_loc)+' ]'+"\n")
+    for species in spp: #write sequences for each species
+        ALIGNMENTSINGLETONS.write(species+"\t"+("".join(singletons_sp_data[species]))+"\n")
+    ALIGNMENTSINGLETONS.write(';\nend;')
+    ALIGNMENTSINGLETONS.close()
+    
 #########################
 
 def main(num_missing, sisrs_dir, composite_dir):
